@@ -3,11 +3,11 @@ import numpy
 
 import sys
 sys.path.append('/mnt/c/Users/marratia/Linux/PionHadronCorr/CompareHistograms')
-from AtlasCommonUtils import *
-from Legend import Legend
-from astroML.plotting import hist
+#from AtlasCommonUtils import *
+#from Legend import Legend
+#from astroML.plotting import hist
 from ROOT import TLatex
-SetAtlasStyle()
+#SetAtlasStyle()
 
 #fMC = ROOT.TFile("fout_16c3b.root")
 fMC = ROOT.TFile("fout_MC.root")
@@ -33,15 +33,15 @@ MergedPionLambdaSpectra.Print()
 
 c = ROOT.TCanvas("c","c")
 
-l = Legend("")
+#l = Legend("")
 purity_NN.SetLineColorAlpha(2,0.85)
 purity_Lambda.SetLineColorAlpha(4,0.85)
 
 purity_NN.SetMarkerColorAlpha(2,0.85)
 purity_Lambda.SetMarkerColorAlpha(4,0.85)
 
-l.Add(purity_NN, "NN>0.85", "L")
-l.Add(purity_Lambda,"#lambda_{0}^{2} > 0.27", "L")
+#l.Add(purity_NN, "NN>0.85", "L")
+#l.Add(purity_Lambda,"#lambda_{0}^{2} > 0.27", "L")
 purity_NN.SetTitle("; p_{T} cluster [GeV]; purity");
 purity_NN.GetXaxis().SetRangeUser(8.0,25.0);
 purity_NN.SetMaximum(1.0)
@@ -50,7 +50,7 @@ purity_NN.Draw()
 purity_Lambda.Draw("same")
 purity_NN.SetLineColorAlpha(2,0.85)
 purity_Lambda.SetLineColorAlpha(4,0.85)
-l.Draw(.2,.35)
+#l.Draw(.2,.35)
 c.SaveAs("purity.pdf")
 
 c.Clear()
@@ -65,7 +65,7 @@ closure_NN.SetMarkerColorAlpha(2, 0.85)
 closure_Lambda.SetMarkerColorAlpha(4, 0.85)
 closure_NN.Draw()
 closure_Lambda.Draw("same")
-l.Draw(.2,.35)
+#l.Draw(.2,.35)
 closure_NN.GetXaxis().SetRangeUser(8.0,25.0);
 c.SaveAs("closureTest.pdf")
 
@@ -82,7 +82,7 @@ eff_NN.SetMaximum(1.3)
 eff_NN.SetMinimum(0.0)
 eff_NN.Draw("AP")
 eff_Lambda.Draw("same")
-l.Draw(.2,.95)
+#l.Draw(.2,.95)
 eff_NN.GetXaxis().SetRangeUser(8.0,25.0);
 c.SaveAs("efficiency.pdf")
 
@@ -96,7 +96,7 @@ MergedPionLambdaSpectra.SetMarkerColorAlpha(4,0.85)
 
 DeepPionSpectra.Draw()
 MergedPionLambdaSpectra.Draw("same")
-l.Draw(.2,.95)
+#l.Draw(.2,.95)
 ROOT.gPad.SetLogy()
 c.SaveAs("spectra_beforecorrection.pdf")
 
@@ -109,7 +109,7 @@ MergedPionLambdaSpectra.Divide(purity_Lambda)
 DeepPionSpectra.Draw()
 DeepPionSpectra.GetXaxis().SetRangeUser(8.0,25.0);
 MergedPionLambdaSpectra.Draw("same")
-l.Draw(.2,.35)
+#l.Draw(.2,.35)
 ROOT.gPad.SetLogy()
 c.SaveAs("spectra_aftercorrection.pdf")
 
@@ -146,7 +146,7 @@ h["b5x5"]["MC"]   = []
 
 colors = [1,2,4,ROOT.kGreen+2,ROOT.kOrange+2,8,9,12] #[2,4,6,33,25]
 tags = [ "", "#pi^{0} 2 showers", "#pi^{0} 1 shower", "#eta BKG", "Other BKG"]
-label = Legend("")
+#label = Legend("")
 
 
 limits = {}
@@ -158,31 +158,31 @@ ptbins = [10.0, 12.0, 14.0, 16.0,18.0,20.0,22.0,24.0,26.0,28.0]
 
 
 for var in ["NN","Lambda","b5x5"]:
-    for ipt in range(len(ptbins)-1): 
+    for ipt in range(len(ptbins)-1):
         print ipt
-
+        
         h[var]["MC"].append(fMC.Get("h_%s_ptbin%i_class0"%(var,ipt)))
         h[var]["data"].append(fdata.Get("h_%s_ptbin%i_class0"%(var,ipt)))
-   
+        
         hs = ROOT.THStack("hs_ptbin%i"%ipt,"hs")
         scalefactor = h[var]["data"][ipt].Integral(limits[var][0],limits[var][1])/h[var]["MC"][ipt].Integral(limits[var][0],limits[var][1])
-    
-    
+        
+        
         for iclass in range(1,5):
             histo = fMC.Get("h_%s_ptbin%i_class%i"%(var,ipt,iclass))
             histo.SetLineColorAlpha(colors[iclass],0.6)
             histo.SetLineWidth(0)
             histo.SetFillColorAlpha(colors[iclass],0.6)
             histo.Scale(scalefactor)
-            if ipt==1 and var=="NN":
-                label.Add(histo, tags[iclass], "L")
-             
-        
+            #if ipt==1 and var=="NN":
+                #label.Add(histo, tags[iclass], "L")
+            
+            
             hs.Add(histo)
         hstack[var].append(hs)
-    
 
-#adding labels: 
+
+#adding labels:
 
 co = {}
 co["NN"] =  2
@@ -195,7 +195,7 @@ for var in ["NN","Lambda","b5x5"]:
     for ipt in range(len(ptbins)-1):
         h[var]["MC"][ipt].Scale(h[var]["data"][ipt].Integral(limits[var][0],limits[var][1])/h[var]["MC"][ipt].Integral(limits[var][0],limits[var][1]))
         c.Clear()
-        l2 = Legend("%2.0f< p_{T}^{clus} < %2.0f GeV" %(ptbins[ipt],ptbins[ipt+1]))
+        #l2 = Legend("%2.0f< p_{T}^{clus} < %2.0f GeV" %(ptbins[ipt],ptbins[ipt+1]))
         h[var]["MC"][ipt].Draw("e1")
         h[var]["data"][ipt].SetLineColorAlpha(1,0.75)
         h[var]["MC"][ipt].SetLineColorAlpha(2,0.75)
@@ -203,35 +203,35 @@ for var in ["NN","Lambda","b5x5"]:
         h[var]["MC"][ipt].SetMarkerColorAlpha(2,0.75)
         h[var]["data"][ipt].SetMarkerStyle(20)
         h[var]["MC"][ipt].SetMarkerStyle(20)
-        l2.Add(h[var]["data"][ipt],"Data","P")
-        l2.Add(h[var]["MC"][ipt],"MC","P")
+        #l2.Add(h[var]["data"][ipt],"Data","P")
+        #l2.Add(h[var]["MC"][ipt],"MC","P")
         h[var]["data"][ipt].Draw("e1same")
-        l2.Draw(.5,.85)
+        #l2.Draw(.5,.85)
         c.SaveAs("try%i_%s.pdf"%(ipt,var))
 
 
 
 for var in ["NN","Lambda","b5x5"]:
     for ipt in range(len(ptbins)-1):
-    
+        
         hstack[var][ipt].Draw("hist")
         if(var=="NN"): hstack[var][ipt].SetTitle("; NN output (2#gamma); entries");
         else: hstack[var][ipt].SetTitle("; #sigma_{long}^{2}; entries");
         hstack[var][ipt].GetYaxis().SetNdivisions(5)
         hstack[var][ipt].GetXaxis().SetNdivisions(10)
-    
+        
         h[var]["data"][ipt].SetMarkerSize(1)
         h[var]["data"][ipt].SetMarkerStyle(20)
-        h[var]["data"][ipt].SetLineColor(1) 
-       
+        h[var]["data"][ipt].SetLineColor(1)
+        
         h[var]["data"][ipt].Draw("e1x0same")
-   
-    
-        labeldata = Legend("%2.0f< p_{T}^{clus} < %2.0f GeV" %(ptbins[ipt],ptbins[ipt+1]))
-        labeldata.Add(h[var]["data"][ipt],"data, pPb", "P")
-        labeldata.Draw(0.45,0.85)
-        label.Draw(0.45,.8)
-       
+        
+        
+        #labeldata = Legend("%2.0f< p_{T}^{clus} < %2.0f GeV" %(ptbins[ipt],ptbins[ipt+1]))
+        #labeldata.Add(h[var]["data"][ipt],"data, pPb", "P")
+        #labeldata.Draw(0.45,0.85)
+        #label.Draw(0.45,.8)
+        
         c.SaveAs("stack_ptbin%i_%s.pdf"%(ipt,var))
         if var =="Lambda":
             ROOT.gPad.SetLogy()
