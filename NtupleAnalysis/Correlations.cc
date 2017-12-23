@@ -17,7 +17,9 @@
 #include <vector>
 #include <math.h>
 
-const int MAX_INPUT_LENGTH = 100;
+const int MAX_INPUT_LENGTH = 200;
+
+enum isolationDet {CLUSTER_ISO_TPC_04, CLUSTER_ISO_ITS_04, CLUSTER_FRIXIONE_TPC_04_02, CLUSTER_FRIXIONE_ITS_04_02};
 
 int main(int argc, char *argv[])
 {
@@ -48,6 +50,7 @@ int main(int argc, char *argv[])
   double noniso_min = 5.0;
   double noniso_max = 15.0;
   
+  // Delta eta
   double deta_max = 0.6;
   
   // Zt bins
@@ -58,6 +61,9 @@ int main(int argc, char *argv[])
    
   // Number of bins in correlation functions
   int n_correlationbins = 18;
+    
+  // Which branch should be used to determine whether a cluster should fall into iso, noniso, or neither
+  isolationDet determiner = CLUSTER_ISO_TPC_04;
   
   // Loop over the config file's lines
   // '#' means comment
@@ -134,28 +140,28 @@ int main(int argc, char *argv[])
       }
       else if (strcmp(key, "Zt_bins") == 0) {
           nztbins = -1;
-          for (const char *v = value; *v != '}';) {
-              while (*v != '}' && !isdigit(*v)) {
+          for (const char *v = value; *v != ']';) {
+              while (*v != ']' && !isdigit(*v)) {
                   v++;
               }
               
               nztbins++;
               
-              while (*v != '}' && (isdigit(*v) || *v == '.')) {
+              while (*v != ']' && (isdigit(*v) || *v == '.')) {
                   v++;
               }
           }
           ztbins = new float[nztbins + 1];
           int i = 0;
-          for (const char *v = value; *v != '}';) {
-              while (*v != '\0' && !isdigit(*v)) {
+          for (const char *v = value; *v != ']' ;) {
+              while (*v != ']' && !isdigit(*v)) {
                   v++;
               }
               
               ztbins[i] = atof(v);
               i++;
               
-              while (*v != '}' && (isdigit(*v) || *v == '.')) {
+              while (*v != ']' && (isdigit(*v) || *v == '.')) {
                   v++;
               }
           }
@@ -163,10 +169,32 @@ int main(int argc, char *argv[])
           for (int i = 0; i <= nztbins; i++)
               std::cout << ztbins[i] << ", ";
           std::cout << "}\n";
+          }
+      else if (strcmp(key, "Cluster_isolation_determinant") == 0) {
+          if (strcmp(value, "cluster_iso_tpc_04") == 0){
+              determiner = CLUSTER_ISO_TPC_04;
+              std::cout << "cluster_iso_tpc_04 will determine the isolation and non-isolation placement" << std::endl;
+          }
+          else if (strcmp(value, "cluster_iso_its_04") == 0){
+              determiner = CLUSTER_ISO_ITS_04;
+              std::cout << "cluster_iso_its_04 will determine the isolation and non-isolation placement" << std::endl;
+          }
+          else if (strcmp(value, "cluster_frixione_tpc_04_02") == 0){
+              determiner = CLUSTER_FRIXIONE_TPC_04_02;
+              std::cout << "cluster_frixione_tpc_04_02 will determine the isolation and non-isolation placement" << std::endl;
+          }
+          else if (strcmp(value, "cluster_frixione_its_04_02") == 0){
+              determiner = CLUSTER_FRIXIONE_ITS_04_02;
+              std::cout << "cluster_frixione_its_04_02 will determine the isolation and non-isolation placement" << std::endl;
+          }
+          else {
+              std::cout << "ERROR: Cluster_isolation_determinant in configuration file must be \"cluster_iso_tpc_04\", \"cluster_iso_its_04\", \"cluster_frixione_tpc_04_02\", or \"cluster_frixione_its_04_02\"" << std::endl << "Aborting the program" << std::endl;
+              exit(EXIT_FAILURE);
+          }
       }
       // Warning message if the key contents are unrecognized
       else {
-          std::cout << "WARNING: Unrecognized keyvariable" << std::endl;
+          std::cout << "WARNING: Unrecognized keyvariable " << key << std::endl;
       }
   }
   fclose(config);
@@ -315,15 +343,20 @@ int main(int argc, char *argv[])
 	if( not(cluster_ncell[n]>Cluster_min)) continue;   //removes clusters with 1 or 2 cells
 	if( not(cluster_e_cross[n]/cluster_e[n]>EcrossoverE_min)) continue; //removes "spiky" clusters
     
-    //float isolation;
-    //if() isolation = cluster_iso_tpc_04[n];
+    // This part uses the determiner varable, acquired from the configuration file's Cluster_isolation_determinant value, to determine isolation
+    // where isolation is the variable to be used to fill the isolated deep-photon pt spectra and ntriggers
+    float isolation;
+    if (determiner == CLUSTER_ISO_TPC_04) isolation = cluster_iso_tpc_04[n];
+    else if (determiner == CLUSTER_ISO_ITS_04) isolation = cluster_iso_its_04[n];
+    else if (determiner == CLUSTER_FRIXIONE_TPC_04_02) isolation = cluster_frixione_tpc_04_02[n];
+    else isolation = cluster_frixione_its_04_02[n];
           
-    // Use the cluster_iso_tpc_04 variable to fill the isolated deep-photon pt spectra and the ntriggers
-	if(cluster_iso_tpc_04[n]<iso_max){
+    // Use the variable "isolation" to fill the isolated deep-photon pt spectra and the ntriggers
+	if(isolation<iso_max){
 	  histogram0.Fill(cluster_pt[n]); //isolated deep-photon pt spectra
 	  h_ntrig.Fill(0);
 	}
-	if(cluster_iso_tpc_04[n]>noniso_min && cluster_iso_tpc_04[n]<noniso_max){
+	if(isolation>noniso_min && isolation<noniso_max){
 	  h_ntrig.Fill(0.5);
 	}
     // Loop over tracks
@@ -341,8 +374,8 @@ int main(int argc, char *argv[])
 	    if(zt>ztbins[izt] and  zt<ztbins[izt+1])
 	      {
               // Where the  h_dPhi_iso and h_dPhi_noniso bins are filled
-		if(cluster_iso_tpc_04[n]< iso_max)    h_dPhi_iso[izt]->Fill(dphi);
-		if(cluster_iso_tpc_04[n]> noniso_min && cluster_iso_tpc_04[n]<noniso_max) h_dPhi_noniso[izt]->Fill(dphi);
+		if(isolation< iso_max)    h_dPhi_iso[izt]->Fill(dphi);
+		if(isolation> noniso_min && isolation<noniso_max) h_dPhi_noniso[izt]->Fill(dphi);
 	      }
 	  } // end loop over bins
 	}//end loop over tracks
