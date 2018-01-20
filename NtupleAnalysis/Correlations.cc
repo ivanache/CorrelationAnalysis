@@ -198,6 +198,10 @@ int main(int argc, char *argv[])
       }
   }
   fclose(config);
+  
+  for (int i = 0; i <= nztbins; i++){
+    std::cout << "zt bound: " << ztbins[i] << std::endl;
+  }
 
   // Loop over files to open, I guess. I may be wrong though.
   for (int iarg = 1; iarg < argc; iarg++) {
@@ -233,8 +237,8 @@ int main(int argc, char *argv[])
     // TH2D histogram2D0("histogram2D0", "", );
       
     // Zt bins
-    const int nztbins = 7;
-    const float ztbins[nztbins+1] = {0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2};
+    //const int nztbins = 7;
+    //const float ztbins[nztbins+1] = {0.0, 0.1, 0.2, 0.4, 0.6, 0.8, 1.0, 1.2};
     
     // Function declarations of h_dPhi_iso and h_dPhi_noniso
     TH1F* h_dPhi_iso[nztbins];
