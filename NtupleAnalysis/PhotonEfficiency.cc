@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
         TApplication application("", &dummyc, dummyv);
         
         // Histogram
-        TH1D* hist_meaured = new TH1D("hist_measured", "", 30, 10.0, 40.0);
+        TH1D* hist_measured = new TH1D("hist_measured", "", 30, 10.0, 40.0);
         TH1D* hist_generated = new TH1D("hist_generated", "", 30, 10.0, 40.0);
         TH1D* hist_ratio = new TH1D("hist_ratio", "", 30, 10.0, 40.0);
         TCanvas* canvas = new TCanvas();
@@ -136,8 +136,6 @@ int main(int argc, char *argv[])
         
         
         // Set the branch addresses of the branches in the TTrees
-        _tree_event->SetBranchStatus("*mc*", 0);
-        
         _tree_event->SetBranchAddress("primary_vertex", primary_vertex);
         _tree_event->SetBranchAddress("ntrack", &ntrack);
         _tree_event->SetBranchAddress("track_e", track_e);
@@ -164,6 +162,7 @@ int main(int argc, char *argv[])
         _tree_event->SetBranchAddress("cluster_cell_id_max", cluster_cell_id_max);
         _tree_event->SetBranchAddress("cell_e", cell_e);
         
+        _tree_event->SetBranchAddress("nmc_truth", &nmc_truth);
         _tree_event->SetBranchAddress("mc_truth_pdg_code", mc_truth_pdg_code);
         _tree_event->SetBranchAddress("mc_truth_pt", mc_truth_pt);
         
@@ -183,35 +182,69 @@ int main(int argc, char *argv[])
                 if( not(cluster_s_nphoton[n]>=0.55)) continue; // NN min
                 
                 // Fill the measured histogram bin
-                hist_meaured->Fill(cluster_pt[n]);
+                hist_measured->Fill(cluster_pt[n]);
                 
             }//end loop on clusters.
+            
+            int mctruths_rejected = 0;
+            int mctruths_accepted = 0;
             
             //loop over mc truth
             for (unsigned int m = 0; m < nmc_truth; m++) {
                 // Apply cuts
-                if( not(mc_truth_pdg_code[m]==22)) continue;
                 
+                if( not(mc_truth_pdg_code[m]==22)) {mctruths_rejected++;  continue; }
+                
+                mctruths_accepted++;
                 // Fill the measured histogram bin
                 hist_generated->Fill(mc_truth_pt[m]);
                 
             }// end loop on mc truth
             
+            if (ievent % 10000 == 0)
+                std::cout<< "Event no. " << ievent << std::endl;
+            
         } //end loop over events
         
         // Calculate ratio
-        hist_ratio = divide_histograms1D(hist_meaured, hist_generated);
+        hist_ratio = divide_histograms1D(hist_measured, hist_generated);
+        
+        // Create the file label, to be used within the filenames, to represent the source file
+        std::string opened_files = "";
+        for (int iarg = 1; iarg < argc; iarg++) {
+            std::string filepath = argv[iarg];
+            
+            opened_files += "_" + filepath.substr(filepath.find_last_of("/")+1, filepath.find_last_of(".")-filepath.find_last_of("/")-1);
+        }
         
         // Draw all graphs
-        TFile* efficiencyOut = new TFile("fout_efficiency.root", "RECREATE");
-        hist_meaured->Write("measured_photons");
+        TFile* efficiencyOut = new TFile(Form("fout_efficiency%s.root", opened_files.c_str()), "RECREATE");
+        hist_measured->Write("measured_photons");
         hist_generated->Write("generated_photons");
         hist_ratio->Write("ratio_photons");
         efficiencyOut->Close();
+        
+        // Save the ratio graphs
+        hist_measured->SetTitle("Measured Photons; P_{T} (GeV); # of photons");
+        hist_measured->GetYaxis()->SetTitleOffset(1.5);
+        hist_measured->Draw();
+        canvas->SaveAs(Form("measuered_photons%s.png", opened_files.c_str()));
+        canvas->Clear();
+        
+        hist_generated->SetTitle("Generated Photons; P_{T} (GeV); # of photons");
+        hist_generated->GetYaxis()->SetTitleOffset(1.5);
+        hist_generated->Draw();
+        canvas->SaveAs(Form("generated_photons%s.png", opened_files.c_str()));
+        canvas->Clear();
+        
+        hist_ratio->SetTitle("Efficiency; P_{T} (GeV); efficiency");
+        hist_ratio->GetYaxis()->SetTitleOffset(1.5);
+        hist_ratio->Draw();
+        canvas->SaveAs(Form("efficiency%s.png", opened_files.c_str()));
+        canvas->Clear();
         
     }//end loop over samples
     
     std::cout << " ending " << std::endl;
     return EXIT_SUCCESS;
 }
-
