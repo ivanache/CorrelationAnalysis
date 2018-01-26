@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
         Float_t cluster_iso_its_04[NTRACK_MAX];
         Float_t cluster_frixione_tpc_04_02[NTRACK_MAX];
         Float_t cluster_frixione_its_04_02[NTRACK_MAX];
-        Float_t cluster_s_nphoton[NTRACK_MAX];
+        Float_t cluster_s_nphoton[NTRACK_MAX][4];
         unsigned short cluster_mc_truth_index[NTRACK_MAX][32];
         Int_t cluster_ncell[NTRACK_MAX];
         UShort_t  cluster_cell_id_max[NTRACK_MAX];
@@ -178,8 +178,8 @@ int main(int argc, char *argv[])
             for (ULong64_t n = 0; n < ncluster; n++) {
                 // Apply cuts
                 if( not(cluster_pt[n]>10)) continue; //select pt of photons
-                if( not(cluster_s_nphoton[n]<=0.85)) continue; // NN max
-                if( not(cluster_s_nphoton[n]>=0.55)) continue; // NN min
+                if( not(cluster_s_nphoton[n][1]<=0.85)) continue; // NN max: deep photons
+                if( not(cluster_s_nphoton[n][1]>=0.55)) continue; // NN min: deep photons
                 
                 // Fill the measured histogram bin
                 hist_measured->Fill(cluster_pt[n]);
@@ -248,3 +248,4 @@ int main(int argc, char *argv[])
     std::cout << " ending " << std::endl;
     return EXIT_SUCCESS;
 }
+
