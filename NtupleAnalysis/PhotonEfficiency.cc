@@ -1,3 +1,5 @@
+// This file selects detected and generated photons from MC files to determine efficiency, which it graphs against momentum as a 1D plot and against phi and eta as a 2D plot
+
 #include <TFile.h>
 #include <TTree.h>
 #include <TLorentzVector.h>
@@ -54,6 +56,41 @@ TH1D* divide_histograms1D(TH1D* graph1, TH1D* graph2){
     return quotient;
 }
 
+// 2D histogram dividing function
+// Precondition: the two histograms must have the same y- and x-dimensions
+TH2D* divide_histograms2D(TH2D* graph1, TH2D* graph2){
+    // Make the 2D histogram to contain the quotient and find minimum and maximum bins along both axes
+    TH2D* quotient = new TH2D(*graph1);
+    double x_bin_min = quotient->GetXaxis()->FindBin(quotient->GetXaxis()->GetXmin());
+    double x_bin_max = quotient->GetXaxis()->FindBin(quotient->GetXaxis()->GetXmax());
+    double y_bin_min = quotient->GetYaxis()->FindBin(quotient->GetYaxis()->GetXmin());
+    double y_bin_max = quotient->GetYaxis()->FindBin(quotient->GetYaxis()->GetXmax());
+    
+    // Loop over all bins, divide the element from graph 1 by its counterpart on graph 2. Manually propogate the error
+    for(int i = x_bin_min; i <= x_bin_max; i++)
+        for(int j = y_bin_min; j <= y_bin_max; j++) {
+            if (graph2->GetBinContent(i, j) != 0)
+                quotient->SetBinContent(i, j, (graph1->GetBinContent(i, j))/(graph2->GetBinContent(i, j)));
+            // Failsafe
+            else
+                quotient->SetBinContent(i, j, 0);
+            
+            // Error propogation
+            if (graph2->GetBinContent(i, j) == 0) {
+                if (graph1->GetBinContent(i, j) == 0)
+                    quotient->SetBinError(i, j, 0);
+                else
+                    quotient->SetBinError(i, j, (quotient->GetBinContent(i, j)*TMath::Sqrt(( (graph1->GetBinError(i, j)/graph1->GetBinContent(i, j)) * (graph1->GetBinError(i, j)/graph1->GetBinContent(i, j)) ) )));
+            }
+            else if (graph1->GetBinContent(i, j) == 0)
+                quotient->SetBinError(i, j, (quotient->GetBinContent(i, j)*TMath::Sqrt(( (graph2->GetBinError(i, j)/graph2->GetBinContent(i, j)) * (graph2->GetBinError(i, j)/graph2->GetBinContent(i, j)) ) )));
+            else
+                quotient->SetBinError(i, j, (quotient->GetBinContent(i, j)*TMath::Sqrt(( (graph1->GetBinError(i, j)/graph1->GetBinContent(i, j)) * (graph1->GetBinError(i, j)/graph1->GetBinContent(i, j)) ) + ( (graph2->GetBinError(i, j)/graph2->GetBinContent(i, j)) * (graph2->GetBinError(i, j)/graph2->GetBinContent(i, j)) ) )));
+        }
+    
+    
+    return quotient;
+}
 
 int main(int argc, char *argv[])
 {
@@ -87,10 +124,16 @@ int main(int argc, char *argv[])
         
         TApplication application("", &dummyc, dummyv);
         
-        // Histogram
+        // 1D Histograms
         TH1D* hist_measured = new TH1D("hist_measured", "", 30, 10.0, 40.0);
         TH1D* hist_generated = new TH1D("hist_generated", "", 30, 10.0, 40.0);
         TH1D* hist_ratio = new TH1D("hist_ratio", "", 30, 10.0, 40.0);
+        
+        // 2D Histograms
+        TH2D* phietamap_measured = new TH2D("phi_eta_map_measured", "", 38, 1.3, 3.2, 32, -0.8, 0.8);
+        TH2D* phietamap_generated = new TH2D("phi_eta_map_generated", "", 38, 1.3, 3.2, 32, -0.8, 0.8);
+        TH2D* phietamap_ratio = new TH2D("phi_eta_map_ratio", "", 38, 1.3, 3.2, 32, -0.8, 0.8);
+        
         TCanvas* canvas = new TCanvas();
         
         //you define variables
@@ -165,6 +208,8 @@ int main(int argc, char *argv[])
         _tree_event->SetBranchAddress("nmc_truth", &nmc_truth);
         _tree_event->SetBranchAddress("mc_truth_pdg_code", mc_truth_pdg_code);
         _tree_event->SetBranchAddress("mc_truth_pt", mc_truth_pt);
+        _tree_event->SetBranchAddress("mc_truth_phi", mc_truth_phi);
+        _tree_event->SetBranchAddress("mc_truth_eta", mc_truth_eta);
         
         
         std::cout << " Total Number of entries in TTree: " << _tree_event->GetEntries() << std::endl;
@@ -181,8 +226,9 @@ int main(int argc, char *argv[])
                 if( not(cluster_s_nphoton[n][1]<=0.85)) continue; // NN max: deep photons
                 if( not(cluster_s_nphoton[n][1]>=0.55)) continue; // NN min: deep photons
                 
-                // Fill the measured histogram bin
+                // Fill the measured histogram bins
                 hist_measured->Fill(cluster_pt[n]);
+                phietamap_measured->Fill(cluster_phi[n], cluster_eta[n]);
                 
             }//end loop on clusters.
             
@@ -196,8 +242,10 @@ int main(int argc, char *argv[])
                 if( not(mc_truth_pdg_code[m]==22)) {mctruths_rejected++;  continue; }
                 
                 mctruths_accepted++;
+                
                 // Fill the measured histogram bin
                 hist_generated->Fill(mc_truth_pt[m]);
+                phietamap_generated->Fill(mc_truth_phi[m], mc_truth_eta[m]);
                 
             }// end loop on mc truth
             
@@ -208,6 +256,7 @@ int main(int argc, char *argv[])
         
         // Calculate ratio
         hist_ratio = divide_histograms1D(hist_measured, hist_generated);
+        phietamap_ratio = divide_histograms2D(phietamap_measured, phietamap_generated);
         
         // Create the file label, to be used within the filenames, to represent the source file
         std::string opened_files = "";
@@ -222,13 +271,16 @@ int main(int argc, char *argv[])
         hist_measured->Write("measured_photons");
         hist_generated->Write("generated_photons");
         hist_ratio->Write("ratio_photons");
+        phietamap_measured->Write("phi_eta_map_measured");
+        phietamap_generated->Write("phi_eta_map_generated");
+        phietamap_ratio->Write("phi_eta_map_ratio");
         efficiencyOut->Close();
         
         // Save the ratio graphs
         hist_measured->SetTitle("Measured Photons; P_{T} (GeV); # of photons");
         hist_measured->GetYaxis()->SetTitleOffset(1.5);
         hist_measured->Draw();
-        canvas->SaveAs(Form("measuered_photons%s.png", opened_files.c_str()));
+        canvas->SaveAs(Form("measured_photons%s.png", opened_files.c_str()));
         canvas->Clear();
         
         hist_generated->SetTitle("Generated Photons; P_{T} (GeV); # of photons");
@@ -241,6 +293,27 @@ int main(int argc, char *argv[])
         hist_ratio->GetYaxis()->SetTitleOffset(1.5);
         hist_ratio->Draw();
         canvas->SaveAs(Form("efficiency%s.png", opened_files.c_str()));
+        canvas->Clear();
+        
+        phietamap_measured->SetTitle("Measured Photons; #phi (#frac{rad}{#pi}); #eta");
+        phietamap_measured->GetXaxis()->SetTitleOffset(1.5);
+        phietamap_measured->GetYaxis()->SetTitleOffset(1.5);
+        phietamap_measured->Draw("SURF2");
+        canvas->SaveAs(Form("measured_photons_phietamap_%s.png", opened_files.c_str()));
+        canvas->Clear();
+        
+        phietamap_generated->SetTitle("Generated Photons; #phi (#frac{rad}{#pi}); #eta");
+        phietamap_generated->GetXaxis()->SetTitleOffset(1.5);
+        phietamap_generated->GetYaxis()->SetTitleOffset(1.5);
+        phietamap_generated->Draw("SURF2");
+        canvas->SaveAs(Form("generated_photons_phietamap_%s.png", opened_files.c_str()));
+        canvas->Clear();
+        
+        phietamap_ratio->SetTitle("Efficiency; #phi (#frac{rad}{#pi}); #eta");
+        phietamap_ratio->GetXaxis()->SetTitleOffset(1.5);
+        phietamap_ratio->GetYaxis()->SetTitleOffset(1.5);
+        phietamap_ratio->Draw("SURF2");
+        canvas->SaveAs(Form("efficiency_phietamap_%s.png", opened_files.c_str()));
         canvas->Clear();
         
     }//end loop over samples
