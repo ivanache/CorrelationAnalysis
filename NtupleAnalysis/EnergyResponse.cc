@@ -147,9 +147,10 @@ int main(int argc, char *argv[])
                 if( not(cluster_s_nphoton[n][1]<=0.85)) {continue;} // NN max: deep photons
                 if( not(cluster_s_nphoton[n][1]>=0.55)) {continue;} // NN min: deep photons
                 
-                // Keep the cluster pt of the cluster within the event that passed the cuts (there should be only one)
-                detectedpT = cluster_pt[n];
-                break;
+                // Keep the highest cluster pt of the cluster within the event that passed the cuts (there should only be one, but just in case)
+                if (detectedpT < cluster_pt[n])
+                    detectedpT = cluster_pt[n];
+                
                 
             }//end loop on clusters
             
