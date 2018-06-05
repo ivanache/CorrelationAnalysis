@@ -27,7 +27,7 @@ const int MAX_INPUT_LENGTH = 200;
 // Precondition: the two histograms must have the same x-dimensions
 TH1D* divide_histograms1D(TH1D* graph1, TH1D* graph2){
     // Make the 1D histogram to contain the quotient and find minimum and maximum bins along both axes
-    TH1D* quotient = new TH1D(*graph1);
+    TH1D* quotient = new TH1D(*graph2);
     double x_bin_min = quotient->GetXaxis()->FindBin(quotient->GetXaxis()->GetXmin());
     double x_bin_max = quotient->GetXaxis()->FindBin(quotient->GetXaxis()->GetXmax());
     
@@ -107,18 +107,27 @@ int main(int argc, char *argv[])
         std::cout << "Opening: " << (TString)argv[iarg] << std::endl;
         TFile *file = TFile::Open((TString)argv[iarg]);
         
+        std::cout << "Hello there!" << std::endl;
+        
         if (file == NULL) {
             std::cout << " fail" << std::endl;
             exit(EXIT_FAILURE);
         }
         file->Print();
         
+        std::cout << "General Kenobi. You are a bold one." << std::endl;
+        
         // Get all the TTree variables from the file to open, I guess
-        TTree *_tree_event = dynamic_cast<TTree *>(file->Get("_tree_event"));
+        TTree *_tree_event = NULL;
+        _tree_event = dynamic_cast<TTree *> (file->Get("_tree_event"));
         
         if (_tree_event == NULL) {
-            std::cout << " fail " << std::endl;
-            exit(EXIT_FAILURE);
+            std::cout << "First try did not got (AliAnalysisTaskNTGJ does not exist, trying again" << std::endl;
+            _tree_event = dynamic_cast<TTree *> (dynamic_cast<TDirectoryFile *>   (file->Get("AliAnalysisTaskNTGJ"))->Get("_tree_event"));
+            if (_tree_event == NULL) {
+                std::cout << " fail " << std::endl;
+                exit(EXIT_FAILURE);
+            }
         }
         //_tree_event->Print();
         
