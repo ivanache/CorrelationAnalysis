@@ -118,7 +118,7 @@ int main(int argc, char *argv[])
         _tree_event = dynamic_cast<TTree *> (file->Get("_tree_event"));
         
         if (_tree_event == NULL) {
-            std::cout << "First try did not got (AliAnalysisTaskNTGJ does not exist, trying again" << std::endl;
+            std::cout << "First try did not got (AliAnalysisTaskNTGJ does not exist), trying again" << std::endl;
             _tree_event = dynamic_cast<TTree *> (dynamic_cast<TDirectoryFile *>   (file->Get("AliAnalysisTaskNTGJ"))->Get("_tree_event"));
             if (_tree_event == NULL) {
                 std::cout << " fail " << std::endl;
@@ -276,14 +276,14 @@ int main(int argc, char *argv[])
                 
                 // Fill the measured histogram bins
                 if(isTruePhoton){
-                    hist_measured->Fill(cluster_pt[n], weight);
                     double phi = cluster_phi[n]/(TMath::Pi());
                     while(phi < 1.2)
                         phi += 2;
                     while (phi > 3.2)
                         phi -= 2;
                     double eta = cluster_eta[n];
-                    if(TMath::Abs(eta) > 0.8) continue;
+                    if(TMath::Abs(eta) > 0.7) continue;
+                    hist_measured->Fill(cluster_pt[n], weight);
                     phietamap_measured->Fill(phi, cluster_eta[n], weight);
                 }
                 
@@ -302,14 +302,19 @@ int main(int argc, char *argv[])
                 mctruths_accepted++;
                 
                 // Fill the measured histogram bin
-                hist_generated->Fill(mc_truth_pt[m], weight);
                 double phi = mc_truth_phi[m]/(TMath::Pi());
                 while(phi < 1.2)
                     phi += 2;
                 while (phi > 3.2)
                     phi -= 2;
                 double eta = mc_truth_eta[m];
-                if(TMath::Abs(eta) > 0.8) continue;
+                // Cut out non-DCal and non-EMCal data
+                if(TMath::Abs(eta) > 0.7) continue;
+                if(phi < 1.45) continue;
+                if(phi >= 1.45 && phi < 1.75 && TMath::Abs(eta) < 0.2) continue;
+                if(phi > 1.85 && phi < 2.45) continue;
+                if(phi > 3.15) continue;
+                hist_generated->Fill(mc_truth_pt[m], weight);
                 phietamap_generated->Fill(phi, mc_truth_eta[m], weight);
                 
             }// end loop on mc truth
