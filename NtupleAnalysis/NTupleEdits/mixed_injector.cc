@@ -367,7 +367,7 @@ int main(int argc, char *argv[])
             newtree->Fill();
             int numentries = newtree->GetEntries();
             if (ievent % 10000 == 0) {
-                std::cout << "Event number: " << ievent << " " << numentries << std::endl;
+                std::cout << "Event number: " << ievent << " GetEntries entry:" << numentries << std::endl;
             }
         }
         newtree->AutoSave();
