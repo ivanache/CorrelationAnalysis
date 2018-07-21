@@ -8,3 +8,7 @@
 *.jdl
 *.pcm
 *.png
+
+*.hdf5
+*.txt
+*.pdf
