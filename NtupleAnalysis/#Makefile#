@@ -28,7 +28,7 @@ CXXFLAGS +=	-I$(BOOST_ROOT)/include
 
 TARGET =	
 
-all:		$(TARGET)
+	all:		$(TARGET)
 
 clean:
 		/usr/bin/rm -f *~ *.o $(TARGET)

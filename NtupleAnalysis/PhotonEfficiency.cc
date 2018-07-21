@@ -240,7 +240,8 @@ int main(int argc, char *argv[])
             // Weight the event by simulation pT bin
             double weight = 1.0;
             if(eg_ntrial>0) weight = eg_cross_section/(double)eg_ntrial;
-            
+	    std::cout<< "Weight: " << weight << std::endl;
+
             //loop over clusters
             for (ULong64_t n = 0; n < ncluster; n++) {
                 // Apply cuts
@@ -391,4 +392,3 @@ int main(int argc, char *argv[])
     std::cout << " ending " << std::endl;
     return EXIT_SUCCESS;
 }
-

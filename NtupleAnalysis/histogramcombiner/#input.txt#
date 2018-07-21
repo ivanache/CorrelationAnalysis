@@ -1,0 +1,6 @@
+13d_4L_Gamma_0GeVTrack_paired_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_7.5.root, "jetpT>7.5GeV;15GeV<cluspT<20GeV"
+13d_4L_Gamma_0GeVTrack_paired_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_10.0.root, "jetpT>10GeV;15GeV<cluspT<20GeV"
+13d_4L_Gamma_0GeVTrack_paired_0GeVTracks_Correlation_0_to_30_cluspT_20.0_to_30.0_minjetpT_7.5.root, "jetpT>7.5GeV;20GeV<cluspT<30GeV"
+13d_4L_Gamma_0GeVTrack_paired_0GeVTracks_Correlation_0_to_30_cluspT_20.0_to_30.0_minjetpT_10.0.root, "jetpT>10GeV;20GeV<cluspT<30GeV"
+13d_4L_Gamma_0GeVTrack_paired_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_5.0.root, "jetpT>5GeV;15GeV<cluspT<20GeVp_{T}^{jet}< 5 GeV,  10 < p_{T}^{clus}<20 GeV"
+13d_4L_Gamma_0GeVTrack_paired_0GeVTracks_Correlation_0_to_30_cluspT_20.0_to_30.0_minjetpT_5.0.root, "jetpT>5GeV;20GeV<cluspT<30GeV"
