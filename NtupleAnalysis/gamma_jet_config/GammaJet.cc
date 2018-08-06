@@ -29,61 +29,68 @@ const int MAX_INPUT_LENGTH = 200;
 const double EPb = 1560;
 
 enum isolationDet {CLUSTER_ISO_TPC_04, CLUSTER_ISO_ITS_04, CLUSTER_FRIXIONE_TPC_04_02, CLUSTER_FRIXIONE_ITS_04_02};
+enum photon_IDVARS {LAMBDA_0, DNN, EMAX_OVER_ECLUSTER};
 
 int main(int argc, char *argv[])
 {
   if (argc < 2) {
     exit(EXIT_FAILURE);
   }
-  // Read configuration file for the cut variables
-  FILE* config = fopen("GammaJet_config.yaml", "r");
-  if (config == NULL)  std::cout<<"no config"<<std::endl;
-  // Default values of various variables used in the file (actual values are to be determined by the configuration file)
-  // Cut variables
-  double primary_vertex_max = 10.0;
-  double SIG_DNN_min = 0.55;
-  double SIG_DNN_max = 0.85;
-  double BKG_DNN_min = 0.0;
-  double BKG_DNN_max = 0.3;
-  double SIG_lambda_min = 0.0;
-  double SIG_lambda_max = 0.4;
-  double BKG_lambda_min = 0.5;
-  double BKG_lambda_max = 2.0;
-  double clus_pT_min = 10;
-  double clus_pT_max = 16;
-  double track_pT_max = 1;
-  double jet_pT_min = 10.0;
-  double Eta_max = 0.5;
-  double Cluster_ncell_min = 2;
-  double Cluster_locmaxima_max = 2.0;
-  double Cluster_distobadchannel = 2.0;
-  double EcrossoverE_min = 0.05;
+
+    // Read configuration file for the cut variables
+    FILE* config = fopen("GammaJet_config.yaml", "r");
+    if (config == NULL)  std::cout<<"no config"<<std::endl;
+    // Default values of various variables used in the file (actual values are to be determined by the configuration file)
+    // Cut variables
+    double primary_vertex_max = 10.0;
+    double SIG_DNN_min = 0.55;
+    double SIG_DNN_max = 0.85;
+    double BKG_DNN_min = 0.0;
+    double BKG_DNN_max = 0.3;
+    double SIG_lambda_min = 0.0;
+    double SIG_lambda_max = 0.4;
+    double BKG_lambda_min = 0.5;
+    double BKG_lambda_max = 2.0;
+    double SIG_Emax_over_Ecluster_min = 0.0;
+    double SIG_Emax_over_Ecluster_max = 0.5;
+    double BKG_Emax_over_Ecluster_min = 0.5;
+    double BKG_Emax_over_Ecluster_max = 1.0;
+    double clus_pT_min = 10;
+    double clus_pT_max = 16;
+    double track_pT_max = 1;
+    double jet_pT_min = 10.0;
+    double Eta_max = 0.5;
+    double Cluster_ncell_min = 2;
+    double Cluster_locmaxima_max = 2.0;
+    double Cluster_distobadchannel = 2.0;
+    double EcrossoverE_min = 0.05;
     
-  // The bounds for the events to fal into the isolation and nonisolation areas
-  double iso_max = 1.0;
-  double noniso_min = 2.0;
-  double noniso_max = 10.0;
+    // The bounds for the events to fal into the isolation and nonisolation areas
+    double iso_max = 1.0;
+    double noniso_min = 2.0;
+    double noniso_max = 10.0;
     
-  // Delta eta
-  double deta_max = 0.5;
+    // Delta eta
+    double deta_max = 0.5;
     
-  // Number of bins in correlation functions
-  int xjbins = 40;
-  int phibins = 20;
-  int etabins = 20;
+    // Number of bins in correlation functions
+    int xjbins = 40;
+    int phibins = 20;
+    int etabins = 20;
     
-  // Which branch should be used to determine whether a cluster should fall into iso, noniso, or neither
-  isolationDet determiner = CLUSTER_ISO_ITS_04;
-  
-  // Truth cuts
-  int rightpdgcode = 22;
-  int rightparentpdgcode = 22;
+    // Which branch should be used to determine whether a cluster should fall into iso, noniso, or neither
+    isolationDet determiner = CLUSTER_ISO_ITS_04;
+    photon_IDVARS photon_identifier = LAMBDA_0;
     
-  // Number of events
-  int nevents = 0;
-  // Loop through config file
-  char line[MAX_INPUT_LENGTH];
-  while (fgets(line, MAX_INPUT_LENGTH, config) != NULL) {
+    // Truth cuts
+    int rightpdgcode = 22;
+    int rightparentpdgcode = 22;
+    
+    // Number of events
+    int nevents = 0;
+    // Loop through config file
+    char line[MAX_INPUT_LENGTH];
+    while (fgets(line, MAX_INPUT_LENGTH, config) != NULL) {
         if (line[0] == '#') {
             continue;
         }
@@ -100,9 +107,9 @@ int main(int argc, char *argv[])
         
         // Use if statements to detect, based on key, which variable the line's content should be used to fill and fill that variable
         if (strcmp(key, "primary_vertex_max") == 0) {
-          // Assign primary_vertex_max to the double-converted version of value
-          primary_vertex_max = atof(value);
-          std::cout << "primary_vertex_max is " << primary_vertex_max << std::endl;
+            // Assign primary_vertex_max to the double-converted version of value
+            primary_vertex_max = atof(value);
+            std::cout << "primary_vertex_max is " << primary_vertex_max << std::endl;
         }
         else if (strcmp(key, "SIG_DNN_min") == 0) {
             // Assign SIG_DNN_min to the double-converted version of value
@@ -143,6 +150,26 @@ int main(int argc, char *argv[])
             // Assign BKG_lambda_max to the double-converted version of value
             BKG_lambda_max = atof(value);
             std::cout << "BKG_lambda_max is " << BKG_lambda_max << std::endl;
+        }
+        else if (strcmp(key, "SIG_Emax_over_Ecluster_min") == 0) {
+            // Assign SIG_lambda_min to the double-converted version of value
+            SIG_Emax_over_Ecluster_min = atof(value);
+            std::cout << "SIG_Emax_over_Ecluster_min is " << SIG_Emax_over_Ecluster_min << std::endl;
+        }
+        else if (strcmp(key, "SIG_Emax_over_Ecluster_max") == 0) {
+            // Assign SIG_lambda_max to the double-converted version of value
+            SIG_Emax_over_Ecluster_max = atof(value);
+            std::cout << "SIG_Emax_over_Ecluster_max is " << SIG_Emax_over_Ecluster_max << std::endl;
+        }
+        else if (strcmp(key, "BKG_Emax_over_Ecluster_min") == 0) {
+            // Assign BKG_lambda_min to the double-converted version of value
+            BKG_Emax_over_Ecluster_min = atof(value);
+            std::cout << "BKG_Emax_over_Ecluster_min is " << BKG_Emax_over_Ecluster_min << std::endl;
+        }
+        else if (strcmp(key, "BKG_Emax_over_Ecluster_max") == 0) {
+            // Assign BKG_lambda_max to the double-converted version of value
+            BKG_Emax_over_Ecluster_max = atof(value);
+            std::cout << "BKG_Emax_over_Ecluster_max is " << BKG_Emax_over_Ecluster_max << std::endl;
         }
         else if (strcmp(key, "clus_pT_min") == 0) {
             clus_pT_min = atof(value);
@@ -208,6 +235,24 @@ int main(int argc, char *argv[])
             xjbins = atoi(value);
             std::cout << "Bins in an xj function: " << xjbins << std::endl;
         }
+        else if (strcmp(key, "photon_idvar") == 0) {
+            if (strcmp(value, "lambda_0") == 0){
+                photon_identifier = LAMBDA_0;
+                std::cout << "lambda_0 will determine photon selection" << std::endl;
+            }
+            else if (strcmp(value, "DNN") == 0){
+                photon_identifier = DNN;
+                std::cout << "Deep Neural Net will determine the isolation and non-isolation placement" << std::endl;
+            }
+            else if (strcmp(value, "Emax_over_Ecluster") == 0){
+                photon_identifier = EMAX_OVER_ECLUSTER;
+                std::cout << "#frac{E_{max}}{E_{cluster}} will determine the isolation and non-isolation placement" << std::endl;
+            }
+            else {
+                std::cout << "ERROR: Cluster_isolation_determinant in configuration file must be \"lambda_0\", \"DNN\", or \"Emax_over_Ecluster\"" << std::endl << "Aborting the program" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+        }
         else if (strcmp(key, "Cluster_isolation_determinant") == 0) {
             if (strcmp(value, "cluster_iso_tpc_04") == 0){
                 determiner = CLUSTER_ISO_TPC_04;
@@ -245,8 +290,8 @@ int main(int argc, char *argv[])
         else {
             std::cout << "WARNING: Unrecognized keyvariable " << key << std::endl;
         }
-  }
-  fclose(config);
+    }
+    fclose(config);
   
   int dummyc = 1;
   char **dummyv = new char *[1];
@@ -319,8 +364,8 @@ int main(int argc, char *argv[])
 
   TH1D hSR_Xj("hSR_Xj", "Xj distribution, Signal region", xjbins, 0.0,2.0);
   TH1D hBR_Xj("hBR_Xj", "Xj distribution, BKG region", xjbins, 0.0,2.0);
-  TH1D hSR_pTD("hSR_pTD", "pTD distribution, Signal region", 60, 0.0,1.0);
-  TH1D hBR_pTD("hBR_pTD", "pTD distribution, BKG region", 60, 0.0,1.0);
+  TH1D hSR_pTD("hSR_pTD", "pTD distribution, Signal region", 20, 0.0,1.0);
+  TH1D hBR_pTD("hBR_pTD", "pTD distribution, BKG region", 20, 0.0,1.0);
   TH1D hSR_Multiplicity("hSR_Multiplicity", "Jet Multiplicity distribution, Signal region", 20, 0.0 , 20.0);
   TH1D hBR_Multiplicity("hBR_Multiplicity", "Jet Multiplicity distribution, BKG region", 20, 0.0, 20.0);
   TH1D hSR_jetwidth("hSR_jetwidth", "jet width distribution, Signal region", 20, -10, 0);
@@ -348,10 +393,10 @@ int main(int argc, char *argv[])
   TH1D hSR_AvgEta_truth("hSR_AvgEta_truth", "Average eta gamma-jet signal region, truth", 2*etabins, -1.2, 1.2);
   TH1D hBR_AvgEta_truth("hBR_AvgEta_truth", "Average eta gamma-jet background region, truth", 2*etabins, -1.2, 1.2);
 
-  TH1D hSR_XobsPb("hSR_XobsPb", "x_{pPb}^{obs} distribution: signal region; x_{pPb}^{obs}; #frac{d #sigma}{dx^{obs}_{pPb}}", 15, 0, 0.015);
-  TH1D hBR_XobsPb("hBR_XobsPb", "x_{pPb}^{obs} distribution: background region; x_{pPb}^{obs}; #frac{d #sigma}{dx^{obs}_{pPb}}", 15, 0, 0.015);
-  TH1D hSR_XobsPb_truth("hSR_XobsPb", "x_{pPb}^{obs} distribution: signal region, truth; x_{pPb}^{obs}; #frac{d #sigma}{dx^{obs}_{pPb}}", 15, 0, 0.015);
-  TH1D hBR_XobsPb_truth("hBR_XobsPb", "x_{pPb}^{obs} distribution: background region, truth; x_{pPb}^{obs}; #frac{d #sigma}{dx^{obs}_{pPb}}", 15, 0, 0.015);
+  TH1D hSR_XobsPb("hSR_XobsPb", "x_{pPb}^{obs} distribution: signal region; x_{pPb}^{obs}; #frac{d #sigma}{dx^{obs}_{pPb}}", 16, 0, 0.008);
+  TH1D hBR_XobsPb("hBR_XobsPb", "x_{pPb}^{obs} distribution: background region; x_{pPb}^{obs}; #frac{d #sigma}{dx^{obs}_{pPb}}", 16, 0, 0.008);
+  TH1D hSR_XobsPb_truth("hSR_XobsPb", "x_{pPb}^{obs} distribution: signal region, truth; x_{pPb}^{obs}; #frac{d #sigma}{dx^{obs}_{pPb}}", 15, 0, 0.008);
+  TH1D hBR_XobsPb_truth("hBR_XobsPb", "x_{pPb}^{obs} distribution: background region, truth; x_{pPb}^{obs}; #frac{d #sigma}{dx^{obs}_{pPb}}", 15, 0, 0.008);
 
   TH1D h_dPhi_truth("h_dPhi_truth", "delta phi gamma-jet truth MC", phibins, 0, TMath::Pi());
 
@@ -502,6 +547,7 @@ int main(int argc, char *argv[])
     UInt_t ncluster;
     Float_t cluster_e[NTRACK_MAX];
     Float_t cluster_e_cross[NTRACK_MAX];
+    Float_t cluster_e_max[NTRACK_MAX];
     Float_t cluster_pt[NTRACK_MAX];
     Float_t cluster_eta[NTRACK_MAX];
     Float_t cluster_phi[NTRACK_MAX];
@@ -592,6 +638,7 @@ int main(int argc, char *argv[])
     _tree_event->SetBranchAddress("ncluster", &ncluster);
     _tree_event->SetBranchAddress("cluster_e", cluster_e);
     _tree_event->SetBranchAddress("cluster_e_cross", cluster_e_cross);
+    _tree_event->SetBranchAddress("cluster_e_max", cluster_e_max);
     _tree_event->SetBranchAddress("cluster_pt", cluster_pt); // here
     _tree_event->SetBranchAddress("cluster_eta", cluster_eta);
     _tree_event->SetBranchAddress("cluster_phi", cluster_phi);
@@ -704,11 +751,22 @@ int main(int argc, char *argv[])
                 if( not(cluster_distance_to_bad_channel[n]>=Cluster_distobadchannel)) continue;
                 if( not(isolation < iso_max)) continue;
 
-                //Bool_t inSignalRegion = cluster_s_nphoton[n][1] > 0.55 and cluster_s_nphoton[n][1]<0.85;
-                //Bool_t inBkgRegion    = cluster_s_nphoton[n][1]<0.30;
-                Bool_t inSignalRegion = cluster_lambda_square[n][0]<SIG_lambda_max;
-                Bool_t inBkgRegion    = cluster_lambda_square[n][0]>BKG_lambda_min;
-     
+                Bool_t inSignalRegion;
+                Bool_t inBkgRegion;
+                
+                if (photon_identifier == DNN) {
+                    inSignalRegion = ((cluster_s_nphoton[n][1] > SIG_DNN_min) and (cluster_s_nphoton[n][1]<SIG_DNN_max));
+                    inBkgRegion    = ((cluster_s_nphoton[n][1]>BKG_DNN_min) and (cluster_s_nphoton[n][1]<BKG_DNN_max));
+                }
+                else if (photon_identifier == LAMBDA_0) {
+                    inSignalRegion = ((cluster_lambda_square[n][0]>SIG_lambda_min) and (cluster_lambda_square[n][0]<SIG_lambda_max));
+                    inBkgRegion    = ((cluster_lambda_square[n][0]>BKG_lambda_min) and (cluster_lambda_square[n][0]<BKG_lambda_max));
+                }
+                else {
+                    float eratio = cluster_e_max[n]/cluster_e[n];
+                    inSignalRegion = (( eratio > SIG_Emax_over_Ecluster_min) and (eratio < SIG_Emax_over_Ecluster_max));
+                    inBkgRegion    = ((eratio > BKG_Emax_over_Ecluster_min) and (eratio < BKG_Emax_over_Ecluster_max));
+                }
            
                 if(inSignalRegion){
 		    hweight.Fill(cluster_pt[n]);
@@ -868,11 +926,23 @@ int main(int argc, char *argv[])
 	  }
 	}
 	
-	//start jet loop 
-	//Bool_t inSignalRegion = cluster_s_nphoton[n][1] > 0.55 and cluster_s_nphoton[n][1]<0.85;
-	//Bool_t inBkgRegion    = cluster_s_nphoton[n][1]<0.30;
-	Bool_t inSignalRegion = cluster_lambda_square[n][0]<SIG_lambda_max;
-	Bool_t inBkgRegion    = cluster_lambda_square[n][0]>BKG_lambda_min;
+	//start jet loop
+          Bool_t inSignalRegion;
+          Bool_t inBkgRegion;
+          
+          if (photon_identifier == DNN) {
+              inSignalRegion = ((cluster_s_nphoton[n][1] > SIG_DNN_min) and (cluster_s_nphoton[n][1]<SIG_DNN_max));
+              inBkgRegion    = ((cluster_s_nphoton[n][1]>BKG_DNN_min) and (cluster_s_nphoton[n][1]<BKG_DNN_max));
+          }
+          else if (photon_identifier == LAMBDA_0) {
+              inSignalRegion = ((cluster_lambda_square[n][0]>SIG_lambda_min) and (cluster_lambda_square[n][0]<SIG_lambda_max));
+              inBkgRegion    = ((cluster_lambda_square[n][0]>BKG_lambda_min) and (cluster_lambda_square[n][0]<BKG_lambda_max));
+          }
+          else {
+              float eratio = cluster_e_max[n]/cluster_e[n];
+              inSignalRegion = ((eratio > SIG_Emax_over_Ecluster_min) and (eratio < SIG_Emax_over_Ecluster_max));
+              inBkgRegion    = ((eratio > BKG_Emax_over_Ecluster_min) and (eratio < BKG_Emax_over_Ecluster_max));
+          }
 
 
         if(inSignalRegion){

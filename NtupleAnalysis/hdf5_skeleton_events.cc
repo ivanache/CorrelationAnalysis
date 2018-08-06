@@ -247,8 +247,8 @@ int main(int argc, char *argv[])
     TH1D* z_Vertices_hdf5 = new TH1D("z_Vertices_hdf5", "Z-vertex (hdf5)", 50, 0, 25);
     TH1D* z_Vertices = new TH1D("z_Vertices", "Z-vertex difference distribution", 50, 0, 25);
     
-    TH1D* Multiplicity_individual = new TH1D("mult_Vertices_individual", "Multiplicity (ROOT)", 1281, 0, 1281);
-    TH1D* Multiplicity_hdf5 = new TH1D("mult_Vertices_hdf5", "Multiplicity (hdf5)", 1281, 0, 1281);
+    TH1D* Multiplicity_individual = new TH1D("mult_Vertices_individual", "Multiplicity (ROOT)", 427, 0, 1281);
+    TH1D* Multiplicity_hdf5 = new TH1D("mult_Vertices_hdf5", "Multiplicity (hdf5)", 427, 0, 1281);
     TH1D* Multiplicity = new TH1D("mult_Vertices", "Multiplicity differnce distribution", 1281, 0, 1281);
     
     //TH2D* Signal_pT_Dist = new TH2D("Signal_pT_Dist","Cluster Pt Spectrum For Isolation (its_04) bins 0.55 < DNN < 0.85",59,0.5,30,59,0.5,30);

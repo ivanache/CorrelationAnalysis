@@ -1,3 +1,6 @@
-17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_5.0.root , p_{T}^{jet}> 5.0 GeV
-17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_7.5.root , p_{T}^{jet}> 7.5 GeV
-17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_10.0.root , p_{T}^{jet}> 10.0 GeV
+17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_5.0.root, 15 GeV < p_{T}^{clus}< 20 GeV; p_{T}^{jet}> 5.0 GeV
+17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_7.5.root, 15 GeV < p_{T}^{clus}< 20 GeV; p_{T}^{jet}> 7.5 GeV
+17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_15.0_to_20.0_minjetpT_10.0.root, 15 GeV < p_{T}^{clus}< 20 GeV; p_{T}^{jet}> 10.0 GeV
+17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_20.0_to_30.0_minjetpT_5.0.root, 20 GeV < p_{T}^{clus}< 30 GeV; p_{T}^{jet}> 5.0 GeV
+17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_20.0_to_30.0_minjetpT_7.5.root, 20 GeV < p_{T}^{clus}< 30 GeV; p_{T}^{jet}> 7.5 GeV
+17q_paired_17p_0GeVTracks_Correlation_0_to_30_cluspT_20.0_to_30.0_minjetpT_10.0.root, 20 GeV < p_{T}^{clus}< 30 GeV; p_{T}^{jet}> 10.0 GeV

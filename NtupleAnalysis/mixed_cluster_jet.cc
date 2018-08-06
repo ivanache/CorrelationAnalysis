@@ -124,6 +124,20 @@ int main(int argc, char *argv[])
     BKGpTD->Sumw2();
     BKGMultiplicity->Sumw2();
     
+    TH1D* z_Vertices_individual = new TH1D("z_Vertices_individual", "Z-vertex (ROOT)", 50, 0, 25);
+    TH1D* z_Vertices_hdf5 = new TH1D("z_Vertices_hdf5", "Z-vertex (hdf5)", 100, -25, 25);
+    TH1D* z_Vertices = new TH1D("z_Vertices", "Z-vertex difference distribution", 50, 0, 25);
+    z_Vertices_individual->Sumw2();
+    z_Vertices_hdf5->Sumw2();
+    z_Vertices->Sumw2();
+    
+    TH1D* Multiplicity_individual = new TH1D("mult_Vertices_individual", "Multiplicity (ROOT)", 427, 0, 1281);
+    TH1D* Multiplicity_hdf5 = new TH1D("mult_Vertices_hdf5", "Multiplicity (hdf5)", 427, 0, 1281);
+    TH1D* Multiplicity = new TH1D("mult_Vertices", "Multiplicity differnce distribution", 1281, 0, 1281);
+    Multiplicity_individual->Sumw2();
+    Multiplicity_hdf5->Sumw2();
+    Multiplicity->Sumw2();
+    
     //Config File ---------------------------------------------------------------------------
     
     //Declaration and Initialize Variables TO BE SET BY [Corr_config.yaml]
@@ -412,11 +426,61 @@ int main(int argc, char *argv[])
     
     //Using low level hdf5 API -------------------------------------------------------------------------------
     
-    //open hdf5: Define size of data from file, explicitly allocate memory in hdf5 space and array size
+    //open hdf5: Define size of data from file, explicitly allocate memory in hdf5 space and array size: event
+    const H5std_string event_ds_name( "event" );
+    H5File h5_file_event( hdf5_file_name, H5F_ACC_RDONLY ); //hdf5_file_name from argv[2]
+    DataSet event_dataset = h5_file_event.openDataSet( event_ds_name );
+    DataSpace event_dataspace = event_dataset.getSpace();
+    
+    //Load the dimensions of dataset from file, to be used in array/hyperslab
+    const int event_ndims = event_dataspace.getSimpleExtentNdims();
+    hsize_t event_maxdims[event_ndims];
+    hsize_t eventdims[event_ndims];
+    event_dataspace.getSimpleExtentDims(eventdims, event_maxdims);
+    //UInt_t nevent_max = eventdims[1];
+    UInt_t NEvent_Vars = eventdims[1];
+    fprintf(stderr, "\n%s:%d: n track variables\n", __FILE__, __LINE__, NEvent_Vars);
+    
+    //Define array hyperslab will be fed into
+    float event_data_out[1][NEvent_Vars];
+    
+    //Define hyperslab size and offset in  FILE;
+    hsize_t event_offset[2] = {0, 0};
+    hsize_t event_count[2] = {1, NEvent_Vars};
+    
+    /*
+     The Offset is how we iterate over the entire hdf5 file.
+     For example, To obtain data for event 68, set the
+     offset's to {68, ntrack_max, NTrack_Vars}.
+     */
+    
+    
+    event_dataspace.selectHyperslab( H5S_SELECT_SET, event_count, event_offset );
+    fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, "select Hyperslab OK");
+    
+    //Define the memory dataspace in which to place hyperslab
+    const int RANK_OUT_event = 2; //# of Dimensions
+    DataSpace event_memspace( RANK_OUT_event, eventdims );
+    
+    //Define memory offset for hypreslab starting at begining:
+    hsize_t event_offset_out[2] = {0};
+    
+    //define Dimensions of array, for writing slab to array
+    hsize_t event_count_out[2] = {1, NEvent_Vars};
+    
+    //define space in memory for hyperslab, then write from file to memory
+    event_memspace.selectHyperslab( H5S_SELECT_SET, event_count_out, event_offset_out );
+    std::cout << "Made it to line 394" <<  std::endl;
+    event_dataset.read( event_data_out, PredType::NATIVE_FLOAT, event_memspace, event_dataspace );
+    fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, "event dataset read into array: OK");
+    
+    
+    
+    //open hdf5: Define size of data from file, explicitly allocate memory in hdf5 space and array size: jet
     //cluster
     const H5std_string jet_ds_name( "jet" );
-    H5File h5_file( hdf5_file_name, H5F_ACC_RDONLY ); //hdf5_file_name from argv[2]
-    DataSet jet_dataset = h5_file.openDataSet( jet_ds_name );
+    H5File h5_file_jet( hdf5_file_name, H5F_ACC_RDONLY ); //hdf5_file_name from argv[2]
+    DataSet jet_dataset = h5_file_jet.openDataSet( jet_ds_name );
     DataSpace jet_dataspace = jet_dataset.getSpace();
     
     //Load the dimensions of dataset from file, to be used in array/hyperslab
@@ -446,8 +510,8 @@ int main(int argc, char *argv[])
     fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, "select Hyperslab OK");
     
     //Define the memory dataspace in which to place hyperslab
-    const int RANK_OUT = 3; //# of Dimensions
-    DataSpace jet_memspace( RANK_OUT, jetdims );
+    const int RANK_OUT_jet = 3; //# of Dimensions
+    DataSpace jet_memspace( RANK_OUT_jet, jetdims );
     
     //Define memory offset for hypreslab starting at begining:
     hsize_t jet_offset_out[3] = {0};
@@ -490,6 +554,7 @@ int main(int argc, char *argv[])
             double jet_eta = -9000;
             double jet_pTD = -9000;
             double jet_multiplicity = -9000;
+            
             for(Long64_t icluster = 0; icluster < ncluster; icluster++) {
                 if(not(cluster_pt[icluster] > cluspTmin)) {continue;}
                 if(not(cluster_pt[icluster] < cluspTmax)) {continue;}
@@ -540,6 +605,17 @@ int main(int argc, char *argv[])
                         SIGXj->Fill(jet_pT/cluspT);
                         SIGpTD->Fill(jet_pTD);
                         SIGMultiplicity->Fill(jet_multiplicity);
+                        
+                        z_Vertices->Fill(TMath::Abs(event_data_out[0][0] - primary_vertex[2]));
+                        z_Vertices_individual->Fill(primary_vertex[2]);
+                        z_Vertices_hdf5->Fill(event_data_out[0][0]);
+                        
+                        float multiplicity_sum = 0;
+                        for (int k = 0; k < 64; k++)  multiplicity_sum += multiplicity_v0[k];
+                        //std::cout << "Multiplicity difference " << TMath::Abs(event_data_out[0][1] - multiplicity_sum) << std::endl;
+                        Multiplicity->Fill(TMath::Abs(event_data_out[0][1] - multiplicity_sum));
+                        Multiplicity_individual->Fill(multiplicity_sum);
+                        Multiplicity_hdf5->Fill(event_data_out[0][1]);
                     }
                     
                     if(cluster_lambda_square[icluster][0] > 0.5) {
@@ -562,6 +638,7 @@ int main(int argc, char *argv[])
                         BKGXj->Fill(jet_pT/cluspT);
                         BKGpTD->Fill(jet_pTD);
                         BKGMultiplicity->Fill(jet_multiplicity);
+                        
                     }
                     
                 }
@@ -574,10 +651,11 @@ int main(int argc, char *argv[])
     
     //very particular about file names to ease scripting
     // Write to fout
+    
     std::string rawname = ((std::string)root_file).substr(((std::string)root_file).find_last_of("/")+1, ((std::string)root_file).find_last_of(".")-((std::string)root_file).find_last_of("/")-1);
     //std::string rawname = std::string(argv[1]);
     TFile* fout = new TFile(Form("%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu_cluspT_%1.1f_to_%1.1f_minjetpT_%2.1f.root",rawname.data(),GeV_Track_Skim,mix_start,mix_end, cluspTmin, cluspTmax, jetpTmin),"RECREATE");
-    
+    std::cout<< "Created datafile: " << Form("%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu_cluspT_%1.1f_to_%1.1f_minjetpT_%2.1f.root",rawname.data(),GeV_Track_Skim,mix_start,mix_end, cluspTmin, cluspTmax, jetpTmin) << std::endl;
     // Normalize
     SIGcluster_pt_dist->Scale(1.0/num_of_triggers);
     SIGjet_pt_dist->Scale(1.0/num_of_triggers);
@@ -678,6 +756,15 @@ int main(int argc, char *argv[])
     BKGpTD->Write();
     BKGMultiplicity->Write();
     
+    z_Vertices->Write();
+    Multiplicity->Write();
+    z_Vertices_individual->Write();
+    z_Vertices_hdf5->Write();
+    Multiplicity_individual->Write();
+    Multiplicity_hdf5->Write();
+    
+    // Commented out due to segfaults
+    /*
     SIGcluster_pt_dist->Draw();
     canvas.SaveAs(Form("signal_cluster_pT_distribution_%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu_cluspT_%1.1f_to_%1.1f_minjetpT_%2.1f.png",rawname.data(),GeV_Track_Skim,mix_start,mix_end, cluspTmin, cluspTmax, jetpTmin));
     canvas.Clear();
@@ -757,6 +844,30 @@ int main(int argc, char *argv[])
     BKGMultiplicity->Draw();
     canvas.SaveAs(Form("background_multiplicity_distribution_%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu_cluspT_%1.1f_to_%1.1f_minjetpT_%2.1f.png",rawname.data(),GeV_Track_Skim,mix_start,mix_end, cluspTmin, cluspTmax, jetpTmin));
     canvas.Clear();
+    
+    z_Vertices->Draw();
+   
+    std::string filepath = argv[1];
+    std::string opened_files = "_" + filepath.substr(filepath.find_last_of("/")+1, filepath.find_last_of(".")-filepath.find_last_of("/")-1);
+    //std::string rawname = std::string(argv[1]);
+    canvas.SaveAs(Form("z_Vertices_%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu.png",opened_files.c_str(),GeV_Track_Skim,mix_start,mix_end));
+    canvas.Clear();
+    Multiplicity->Draw();
+    canvas.SaveAs(Form("Multiplicity_%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu.png",opened_files.c_str(),GeV_Track_Skim,mix_start,mix_end));
+    //Signal_pT_Dist->Write();
+    canvas.Clear();
+    z_Vertices_individual->Draw();
+    canvas.SaveAs(Form("z_Vertices_individual_%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu.png",opened_files.c_str(),GeV_Track_Skim,mix_start,mix_end));
+    canvas.Clear();
+    z_Vertices_hdf5->Draw();
+    canvas.SaveAs(Form("z_Vertices_hdf5l_%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu.png",opened_files.c_str(),GeV_Track_Skim,mix_start,mix_end));
+    canvas.Clear();
+    Multiplicity_individual->Draw();
+    canvas.SaveAs(Form("Multiplicity_individual_%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu.png",opened_files.c_str(),GeV_Track_Skim,mix_start,mix_end));
+    canvas.Clear();
+    Multiplicity_hdf5->Draw();
+    canvas.SaveAs(Form("Multiplicity_hdf5_%s_%luGeVTracks_Correlation_%1.1lu_to_%1.1lu.png",opened_files.c_str(),GeV_Track_Skim,mix_start,mix_end));
+    canvas.Clear(); */
     
     canvas.Close();
     

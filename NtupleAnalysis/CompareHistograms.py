@@ -132,6 +132,7 @@ def plotHists(hists,files, xtitle, ytitle, title, pdfname,ly=False):
         hists[i].SetMarkerStyle(style[i])
         hists[i].SetMarkerSize(1)
         hists[i].SetLineWidth(2)
+        hists[i].Rebin()
        # print 'i ' , i , ' MINIMUM:  ' , hists[i].GetHistogram().GetMinimum() , ' MAXIMUM : ' , hists[i].GetHistogram().GetMaximum(), 
         label.Add(hists[i],tag[i],"L")
         multi.Add(hists[i])
